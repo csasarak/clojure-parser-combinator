@@ -93,7 +93,7 @@
                            )))))
 
 (defn many [p]
-  (choice (many1 p) success []))
+  (ex-or (many1 p) (success [])))
 
 
 ;; FUNCTIONS THAT MAKE PARSERS FOR DIFFERENT STRINGS
