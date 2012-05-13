@@ -70,16 +70,21 @@
   "Bind two parsers together in sequence"
   (>>= p1 (fn [inp1]
             (>>= p2 (fn [inp2]
-                      (result  [inp1 inp2]))))))
+                      (result (concat [inp1 inp2])))))))
 
-;; (defn bind-many [p1 p2 & parsers] ;; This emulates Haskells do notation for parsers
-;;   "Bind a list of many parsers together in sequence"
-;;   (if (and p1 p2)
-;;     (loop [[p3 & ps] parsers acc (bind2 (p1) (p2))]
-;;       (if (not p3) acc
-;;           (recur ps  (bind2 acc (p3)))))
-;;     (zero)
-;;     ))
+;; This function can be used to emulate Haskell's do notation for parsers.  It
+;; uses Clojure's loop-recur functionality which are macros that let you do tail
+;; recursion. The JVM does not allow for this to be done automatically.  The
+;; first loop call binds initial values to variables. The call to recur is
+;; supplied with new values for these variables and jumps up to the most recent
+;; recursion target it can find, in this case loop. The function itself can also
+;; be used as a target, i.e. use recur without loop.
+(defn bind-many [p1 p2 & parsers] 
+  "Bind a list of many parsers together in sequence"
+  (loop [[p3 & ps] parsers acc (bind2 p1 p2)]
+    (if (not p3) acc
+        (recur ps  (bind2 acc p3))))
+  )
 
 ;; FUNCTIONS THAT MAKE PARSERS FOR DIFFERENT STRINGS
 
@@ -110,4 +115,3 @@
      "The parser which matches any single upper or lower-case letter of the
       alphabet"
      (+++ lower upper))
-
