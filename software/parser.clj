@@ -1,7 +1,7 @@
 ;; Author: Christopher Sasarak
 ;; This declares that these functions are in the parser namespace
 (ns parser "Basic functions for monadic parsing.") 
-
+ 
 ;; For the purposes of these parsers, the results will be a vector of 2-vectors
 ;; One possible alternative is a Clojure facility such as defrecord which provides
 ;; some documentation of the expected values for a type and creates a Java class for
@@ -35,13 +35,11 @@
 (defn sat [pred]
   "Takes a predicate and returns a parser that consumes a character if
    the predicate is satisfied, otherwise nothing"
-  (let [sat' (fn [inp]
-               (if (pred inp)
-                 (result inp)
-                 zero)
-               )
-        ]
-    (>>= item sat')))
+  (letfn [(sat' [inp]
+                (if (pred inp)
+                  (success inp)
+                  zero))]
+         (>>= item sat')))
 
 ;; This function has a slight advantage on the haskell implementation because it
 ;; can operate on an arbitrary number of parsers
@@ -70,7 +68,7 @@
   "Bind two parsers together in sequence"
   (>>= p1 (fn [inp1]
             (>>= p2 (fn [inp2]
-                      (result (concat [inp1 inp2])))))))
+                      (success (flatten [inp1 inp2])))))))
 
 ;; This function can be used to emulate Haskell's do notation for parsers.  It
 ;; uses Clojure's loop-recur functionality which are macros that let you do tail
