@@ -16,32 +16,32 @@
   (fn [inp] [[v inp]])) ;; fn creates a function that isn't bound to a name, defn
                         ;; is a combination of the def and fn macros for named functions
 
-(defn zero []
+(defn zero [inp]
   "This parser always fails, regardless of its input"
-  (fn [inp] []))
+  [])
 
-(defn item []
+(defn item [inp]
   "Consumes the first character if the input string is non-empty"
-  (fn [inp]
-    (if (seq inp)
-      (let [[hd & rst] inp] ;; This destructures inp into its head and tail
-        [[hd rst]])
-      [])))
+  (if (seq inp)
+    (let [[hd & rst] inp] ;; This destructures inp into its head and tail
+      [[hd rst]])
+    []))
 
 (defn >>= [pars f]
+  "A bind function for parsers"
   (fn [inp] (first (concat (for [[v inp'] (pars inp)]
                              ((f v) inp'))))))
 
 (defn sat [pred]
   "Takes a predicate and returns a parser that consumes a character if
    the predicate is satisfied, otherwise nothing"
-  (let [sat' (fn [x]
-               (if (pred x)
-                 (result x)
-                 (zero))
+  (let [sat' (fn [inp]
+               (if (pred inp)
+                 (result inp)
+                 zero)
                )
         ]
-    (>>= (item) sat')))
+    (>>= item sat')))
 
 ;; This function has a slight advantage on the haskell implementation because it
 ;; can operate on an arbitrary number of parsers
@@ -60,11 +60,26 @@
   (fn [inp]
     (filter #(seq %) ((apply choice parsers) inp))))
 
-(defn parse-char [x]
-  "Takes a single character and returns the parser that consumes only
-   that character"
-  (sat #(= x %)
-       ))
+(defn +++ [& parsers]
+  "Like the choice function, but only returns the first parse successful parse"
+  (fn [inp]
+    (first ((apply choice-succ parsers) inp))
+    ))
+
+(defn bind2 [p1 p2]
+  "Bind two parsers together in sequence"
+  (>>= p1 (fn [inp1]
+            (>>= p2 (fn [inp2]
+                      (result  [inp1 inp2]))))))
+
+;; (defn bind-many [p1 p2 & parsers] ;; This emulates Haskells do notation for parsers
+;;   "Bind a list of many parsers together in sequence"
+;;   (if (and p1 p2)
+;;     (loop [[p3 & ps] parsers acc (bind2 (p1) (p2))]
+;;       (if (not p3) acc
+;;           (recur ps  (bind2 acc (p3)))))
+;;     (zero)
+;;     ))
 
 ;; FUNCTIONS THAT MAKE PARSERS FOR DIFFERENT STRINGS
 
@@ -74,3 +89,25 @@
   "Takes a single character and returns the parser that consumes only
    that character"
   (sat #(= x %)))
+
+;; This function shows java interop with Character/isDigit. In order
+;; to use a java function as a first class object though, it must be
+;; wrapped in a Clojure function, java.lang.* is automatically
+;; imported into any clojure program
+(def digit 
+     "Return the parser that parses a character if it is a digit."
+     (sat #(Character/isDigit %)))
+
+(def lower
+     "The parser that parses a lowercase character"
+     (sat #(Character/isLowerCase %)))
+
+(def upper
+     "The parser that parses a lowercase character"
+     (sat #(Character/isUpperCase %)))
+
+(def letter
+     "The parser which matches any single upper or lower-case letter of the
+      alphabet"
+     (+++ lower upper))
+
