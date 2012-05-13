@@ -10,8 +10,8 @@
 
 
 ;; FUNCTIONS FOR MANIPULATING PARSERS
-(defn result [v]
-  "Result returns a parser which consumes none of its input and returns
+(defn success [v]
+  "Success returns a parser which consumes none of its input and returns
    v as the result"
   (fn [inp] [[v inp]])) ;; fn creates a function that isn't bound to a name, defn
                         ;; is a combination of the def and fn macros for named functions
@@ -48,9 +48,9 @@
   "Returns a parser which applies the supplied parsers as arguments to
    the same inp string and returns a vector of their results"
   (fn [inp]
-    (map #(% inp) parsers ;; #(s-exp) is shorthand for a lambda, % refers to its argument
+    (map #(% inp) parsers);; #(s-exp) is shorthand for a lambda, % refers to its argument
          ;; for multiple arguments use %1, %2 .. %n for multiple arguments
-         )))
+    ))
 
 (defn choice-succ [& parsers]
   "Assuming some of the parsers will fail on the given input, return a parser which
@@ -58,8 +58,8 @@
   (fn [inp]
     (filter #(seq %) ((apply choice parsers) inp))))
 
-(defn +++ [& parsers]
-  "Like the choice function, but only returns the first parse successful parse"
+(defn ex-or [& parsers]
+  "Like the choice function, but only returns the first successful parse"
   (fn [inp]
     (first ((apply choice-succ parsers) inp))
     ))
@@ -109,7 +109,18 @@
      "The parser that parses a lowercase character"
      (sat #(Character/isUpperCase %)))
 
+(def whitespaceChar
+     "The parser which matches a whitespace character"
+     (sat #(Character/isWhitespace %)))
+
 (def letter
      "The parser which matches any single upper or lower-case letter of the
       alphabet"
-     (+++ lower upper))
+     (ex-or lower upper))
+
+(def alphanum
+     "The parser which matches any upper or lower-case letter or a number"
+     (ex-or letter digit))
+
+
+
