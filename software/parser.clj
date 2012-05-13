@@ -27,11 +27,6 @@
       [[hd rst]])
     []))
 
-(defn >>= [pars f]
-  "A bind function for parsers"
-  (fn [inp] (first (concat (for [[v inp'] (pars inp)]
-                             ((f v) inp'))))))
-
 (defn sat [pred]
   "Takes a predicate and returns a parser that consumes a character if
    the predicate is satisfied, otherwise nothing"
@@ -64,6 +59,29 @@
     (first ((apply choice-succ parsers) inp))
     ))
 
+(declare many)
+(defn many1 [p]
+  (>>= p (fn [inp1]
+           (>>= (many p) (fn [inp2]
+                           (let [rslt (filter #(not= nil %) (flatten [inp1 inp2])) ]
+                             (success rslt))
+                           )))))
+
+(defn many [p]
+  (ex-or (many1 p) (success [])))
+
+
+;; FUNCTIONS FOR DEALING WITH MONADS
+(defn >>= [pars f]
+  "A bind function for parsers"
+  (fn [inp] (first (concat (for [[v inp'] (pars inp)]
+                             ((f v) inp'))))))
+
+(defn >> [p1 p2]
+  "Then is like bind but throws away the result of the first monad"
+  (>>= p1 (fn [inp]
+            p2)))
+
 (defn bind2 [p1 p2]
   "Bind two parsers together in sequence"
   (>>= p1 (fn [inp1]
@@ -83,18 +101,6 @@
     (if (not p3) acc
         (recur ps (bind2 acc p3))))
   )
-
-(declare many)
-(defn many1 [p]
-  (>>= p (fn [inp1]
-           (>>= (many p) (fn [inp2]
-                           (let [rslt (filter #(not= nil %) (flatten [inp1 inp2])) ]
-                             (success rslt))
-                           )))))
-
-(defn many [p]
-  (ex-or (many1 p) (success [])))
-
 
 ;; FUNCTIONS THAT MAKE PARSERS FOR DIFFERENT STRINGS
 
