@@ -81,8 +81,20 @@
   "Bind a list of many parsers together in sequence"
   (loop [[p3 & ps] parsers acc (bind2 p1 p2)]
     (if (not p3) acc
-        (recur ps  (bind2 acc p3))))
+        (recur ps (bind2 acc p3))))
   )
+
+(declare many)
+(defn many1 [p]
+  (>>= p (fn [inp1]
+           (>>= (many p) (fn [inp2]
+                           (let [rslt (filter #(not= nil %) (flatten [inp1 inp2])) ]
+                             (success rslt))
+                           )))))
+
+(defn many [p]
+  (choice (many1 p) success []))
+
 
 ;; FUNCTIONS THAT MAKE PARSERS FOR DIFFERENT STRINGS
 
