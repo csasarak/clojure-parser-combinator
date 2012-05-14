@@ -63,7 +63,7 @@
   (fn [inp]
     (filter #(seq %) ((apply choice parsers) inp))))
 
-(defn ex-or [& parsers]
+(defn x-or [& parsers]
   "Like the choice function, but only returns the first successful parse"
   (fn [inp]
     (first ((apply choice-succ parsers) inp))
@@ -78,7 +78,7 @@
                            )))))
 
 (defn many [p]
-  (ex-or (many1 p) (success [])))
+  (x-or (many1 p) (success [])))
 
 
 ;; FUNCTIONS FOR DEALING WITH MONADS
@@ -144,11 +144,9 @@
 (def letter
      "The parser which matches any single upper or lower-case letter of the
       alphabet"
-     (ex-or lower upper))
+     (x-or lower upper))
 
 (def alphanum
      "The parser which matches any upper or lower-case letter or a number"
-     (ex-or letter digit))
-
-
+     (x-or letter digit))
 
