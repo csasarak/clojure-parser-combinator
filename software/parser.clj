@@ -36,6 +36,16 @@
                   zero))]
          (>>= item sat')))
 
+(defn parse' [p1 inp]
+  "Run a parser with the given input"
+  (p1 inp))
+
+(defn parse [p1 inp]
+  "Run a parser with the given input and return it as a 2-vector of Strings"
+  (let [[consumed left] (first (parse' p1 inp))]
+    [(apply str consumed) (apply str left)])
+  )
+
 ;; This function has a slight advantage on the haskell implementation because it
 ;; can operate on an arbitrary number of parsers
 
